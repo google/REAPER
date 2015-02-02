@@ -1,7 +1,5 @@
 # REAPER: Robust Epoch And Pitch EstimatoR
 
-[![Build Status](https://magnum.travis-ci.com/google/REAPER.svg?token=wxyfP8HFu4gs8EDyjzzw)](https://magnum.travis-ci.com/google/REAPER)
-
 This is a speech processing system.  The epoch program uses the
 EpochTracker class to simultaneously estimate the location of
 voiced-speech "epochs" or glottal closure instants (GCI), voicing
