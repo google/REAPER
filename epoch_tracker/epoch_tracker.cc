@@ -93,9 +93,12 @@ bool EpochTracker::SanityCheck(const Wave& wave) const {
   return true;
 }
 
+//bool EpochTracker::ComputeEpochs(const Wave& wave,
+//                                 std::unique_ptr<Track>* pm,
+//                                 std::unique_ptr<Track>* f0) {
 bool EpochTracker::ComputeEpochs(const Wave& wave,
-                                 std::unique_ptr<Track>* pm,
-                                 std::unique_ptr<Track>* f0) {
+                                 Track** pm,
+                                 Track** f0) {
   if (!SanityCheck(wave)) {
     return false;
   }
@@ -131,8 +134,10 @@ bool EpochTracker::ComputeEpochs(const Wave& wave,
   }
 
   // create pm and f0 objects, these need to be freed in calling client.
-  pm->reset(MakeEpochOutput(unvoiced_pulse_interval_));
-  f0->reset(MakeF0Output(external_frame_interval_));
+  //  pm->reset(MakeEpochOutput(unvoiced_pulse_interval_));
+  //  f0->reset(MakeF0Output(external_frame_interval_));
+  *pm = MakeEpochOutput(unvoiced_pulse_interval_);
+  *f0 = MakeF0Output(external_frame_interval_);
 
   return true;
 }
@@ -869,9 +874,10 @@ bool EpochTracker::ComputeFeatures(void) {
   fprintf(stdout, "Residual symmetry: P:%f  N:%f  MEAN:%f\n",
               positive_rms_, negative_rms_, mean);
   if (positive_rms_ > negative_rms_) {
-    fprintf(stdout, "Inverting residual\n");
+    fprintf(stdout, "Inverting signal\n");
     for (size_t i = 0; i < residual_.size(); ++i) {
       residual_[i] = -residual_[i];
+      signal_[i] = -signal_[i];
     }
   }
   NormalizeAmplitude(residual_, sample_rate_, &norm_residual_);

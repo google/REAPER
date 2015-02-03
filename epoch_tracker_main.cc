@@ -27,25 +27,25 @@ limitations under the License.
 
 
 const char* kHelp = "Usage: <bin> -i <input_file> "
-    "[-f <f0_output> -p <pitchmarks_output "
-    "-t <true|false> "
-    "-p <true|false> "
+    "[-f <f0_output> -p <pitchmarks_output> "
+    "-t "
+    "-s "
     "-e <float> "
     "-x <float> "
     "-m <float> "
     "-u <float> "
-    "-a <true|false "
-    "-d debug_output]"
+    "-a "
+    "-d <debug_output_basename>] "
     "\n\n Help:\n"
     "-t enables a Hilbert transform that may reduce phase distortion\n"
-    "-s apply high pass filter (control application of an 80Hz "
-    "rumble-removal highpass filter)\n"
+    "-s suppress applying high pass filter at 80Hz "
+    "(rumble-removal highpass filter)\n"
     "-e specifies the output frame interval for F0\n"
     "-x maximum f0 to look for\n"
     "-m minimum f0 to look for\n"
     "-u regular inter-pulse interval to use in unvoiced regions\n"
-    "-a saves output in ascii mode\n"
-    "-d write output diagnostics to this file pattern, if not empty\n";
+    "-a saves F0 and PM output in ascii mode\n"
+    "-d write diagnostic output to this file pattern\n";
 
 int main(int argc, char* argv[]) {
   int opt = 0;
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
   float inter_pulse = kUnvoicedPulseInterval;
   bool ascii = false;
   std::string debug_output;
-  while ((opt = getopt(argc, argv, "i:f:p:h:t:s:e:x:m:u:a:d")) != -1) {
+  while ((opt = getopt(argc, argv, "i:f:p:htse:x:m:u:ad:")) != -1) {
     switch(opt) {
       case 'i':
         filename = optarg;
@@ -72,10 +72,10 @@ int main(int argc, char* argv[]) {
         pm_output = optarg;
         break;
       case 't':
-        do_hilbert_transform = std::string(optarg) == "true";
+        do_hilbert_transform = true;
         break;
       case 's':
-        do_high_pass = std::string(optarg) == "false";
+        do_high_pass = false;
         break;
       case 'e':
         external_frame_interval = atof(optarg);
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
         inter_pulse = atof(optarg);
         break;
       case 'a':
-        ascii = std::string(optarg) == "true";
+        ascii = true;
         break;
       case 'd':
         debug_output = optarg;
@@ -123,8 +123,8 @@ int main(int argc, char* argv[]) {
   et.set_min_f0_search(min_f0);
   et.set_unvoiced_pulse_interval(inter_pulse);
 
-  std::unique_ptr<Track> f0;
-  std::unique_ptr<Track> pm;
+  Track *f0 = NULL;
+  Track *pm = NULL;
   if (!et.ComputeEpochs(wav, &pm, &f0)) {
     fprintf(stderr, "Failed to compute epochs\n");
     return 1;
@@ -132,13 +132,16 @@ int main(int argc, char* argv[]) {
 
   // Save outputs.
   if (!f0_output.empty() && !f0->Save(f0_output, ascii)) {
-    fprintf(stderr, "Failed to sae f0 to '%s'\n", f0_output.c_str());
+    delete f0;
+    fprintf(stderr, "Failed to save f0 to '%s'\n", f0_output.c_str());
     return 1;
   }
   if (!pm_output.empty() && !pm->Save(pm_output, ascii)) {
-    fprintf(stderr, "Failed to sae pitchmarks to '%s'\n", pm_output.c_str());
+    delete pm;
+    fprintf(stderr, "Failed to save pitchmarks to '%s'\n", pm_output.c_str());
     return 1;
   }
-
+  delete f0;
+  delete pm;
   return 0;
 }
