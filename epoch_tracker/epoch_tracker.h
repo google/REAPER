@@ -118,8 +118,7 @@ class EpochTracker {
   // return results in these.  If either epoch or f0 are NULL, the
   // corresponding signal is not returned.  It is up to the callr to free
   // these.  This is to be used only after Init(void) is called.
-  bool ComputeEpochs(const Wave& wave, std::unique_ptr<Track>* epoch,
-		     std::unique_ptr<Track>* f0);
+  bool ComputeEpochs(const Wave& wave, Track** epoch, Track** f0);
 
   // Create Track epoch output from Epoch internal structures
   Track *MakeEpochOutput(float unvoiced_pm_interval);
