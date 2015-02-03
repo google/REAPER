@@ -63,7 +63,7 @@ float ToFloat(const std::string &s) {
 const uint32_t kMaxCharBufSize = 8192;  // 8k
 
 std::string GetToken(FileResource *fr) {
-  std::unique_ptr<char[]> buff(new char[kMaxCharBufSize]);
+  char buff[kMaxCharBufSize];
   uint32_t i = 0;
   bool foundData = false;
   do {
@@ -79,7 +79,7 @@ std::string GetToken(FileResource *fr) {
     i++;
   } while (i < kMaxCharBufSize && !fr->eof());
   buff[i] = 0;
-  return std::string(buff.get());
+  return std::string(buff);
 }
 
 // Find the first whitespace/newline delimited token in the character
