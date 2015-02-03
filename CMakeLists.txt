@@ -33,7 +33,7 @@ add_library(epoch_tracker STATIC epoch_tracker/fft.h epoch_tracker/fft.cc
   epoch_tracker/epoch_tracker.cc epoch_tracker/epoch_tracker.h)
 
 # Binary to extract F0.
-add_executable(tracker epoch_tracker_main.cc)
+add_executable(reaper epoch_tracker_main.cc)
 target_link_libraries(wave core)
 target_link_libraries(epoch_tracker wave)
-target_link_libraries(tracker epoch_tracker)
+target_link_libraries(reaper epoch_tracker)
