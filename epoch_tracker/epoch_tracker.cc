@@ -25,11 +25,9 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "core/track.h"
 #include "epoch_tracker/fd_filter.h"
 #include "epoch_tracker/lpc_analyzer.h"
 #include "epoch_tracker/fft.h"
-#include "wave/wave.h"
 
 const int kMinSampleRate = 6000;
 
@@ -40,108 +38,9 @@ EpochTracker::EpochTracker(void) : sample_rate_(-1.0) {
 EpochTracker::~EpochTracker(void) {
 }
 
-bool EpochTracker::Init(void) {
-  return true;
-}
-
-Track *EpochTracker::MakeEpochOutput(float unvoiced_pm_interval) {
-  std::vector<float> times;
-  std::vector<int16_t> voicing;
-  GetFilledEpochs(unvoiced_pm_interval, &times, &voicing);
-  Track *pm_track = new Track;
-  pm_track->resize(times.size());
-  for (int32_t i = 0; i < times.size(); ++i) {
-    pm_track->t(i) = times[i];
-    pm_track->set_v(i, voicing[i]);
-  }
-
-  return pm_track;
-}
-
-Track *EpochTracker::MakeF0Output(float resample_interval) {
-  std::vector<float> f0;
-  std::vector<float> corr;
-  if (!ResampleAndReturnResults(resample_interval, &f0, &corr)) {
-    return NULL;
-  }
-  Track *f0_track = new Track;
-  f0_track->resize(f0.size());
-
-  for (int32_t i = 0; i < f0.size(); ++i) {
-    f0_track->t(i) = resample_interval * i;
-    f0_track->set_v(i, (f0[i] > 0.0) ? true : false);
-    f0_track->a(i) = (f0[i] > 0.0) ? f0[i] : -1.0;
-  }
-  return f0_track;
-}
-
-bool EpochTracker::SanityCheck(const Wave& wave) const {
-  if (!wave.data() || wave.sample_rate() < kMinSampleRate) {
-    fprintf(stderr, "ComputeEpochs: Invalid wave data.");
-    return false;
-  }
-  if (wave.num_samples() < wave.sample_rate() * 0.05) {
-    fprintf(stderr, "ComputeEpochs: Not enough samples.");
-    return false;
-  }
-  if (internal_frame_interval_ < 0.0 ||
-      min_f0_search_ > max_f0_search_ ||
-      min_f0_search_ < 0.0) {
-    fprintf(stderr, "ComputeEpochs: Param settings are bad.");
-    return false;
-  }
-  return true;
-}
-
-bool EpochTracker::ComputeEpochs(const Wave& wave,
-                                 Track** pm,
-                                 Track** f0) {
-  if (!SanityCheck(wave)) {
-    return false;
-  }
-  CleanUp();
-  sample_rate_ = wave.sample_rate();
-  int32_t n_input = wave.num_samples();
-  int16_t* input_p = const_cast<int16_t *>(wave.data()->data());
-  bool own_memory = false;
-  if (do_highpass_) {
-    input_p = HighpassFilter(input_p, n_input, sample_rate_,
-                             corner_frequency_, filter_duration_);
-    own_memory = true;
-  }
-  signal_.resize(n_input);
-  if (do_hilbert_transform_) {
-    HilbertTransform(input_p, n_input, &(signal_.front()));
-  } else {
-    for (int32_t i = 0; i < n_input; ++i) {
-      signal_[i] = input_p[i];
-    }
-  }
-  if (own_memory) {
-    delete [] input_p;
-  }
-  if (!ComputeFeatures()) {
-    return false;
-  }
-  bool tr_result = TrackEpochs();
-  WriteDiagnostics("");  // Try to save them here, even after tracking failure.
-  if (!tr_result) {
-    fprintf(stderr, "Problems in TrackEpochs");
-    return false;
-  }
-
-  // create pm and f0 objects, these need to be freed in calling client.
-  *pm = MakeEpochOutput(unvoiced_pulse_interval_);
-  *f0 = MakeF0Output(external_frame_interval_);
-
-  return true;
-}
-
-
 static inline int32_t RoundUp(float val) {
   return static_cast<int32_t>(val + 0.5);
 }
-
 
 void EpochTracker::CleanUp(void) {
   for (size_t i = 0; i < resid_peaks_.size(); ++i) {
@@ -235,16 +134,13 @@ void EpochTracker::SetParameters(void) {
 }
 
 bool EpochTracker::Init(const int16_t* input, int32_t n_input, float sample_rate,
-                        float frame_interval,
                         float min_f0_search, float max_f0_search,
                         bool do_highpass, bool do_hilbert_transform) {
   if (input && (sample_rate > 6000.0) && (n_input > (sample_rate * 0.05)) &&
-      (frame_interval > 0.0) &&
       (min_f0_search < max_f0_search) && (min_f0_search > 0.0)) {
     CleanUp();
     min_f0_search_ = min_f0_search;
     max_f0_search_ = max_f0_search;
-    internal_frame_interval_ = frame_interval;
     sample_rate_ = sample_rate;
     int16_t* input_p = const_cast<int16_t *>(input);
     if (do_highpass) {
@@ -303,7 +199,8 @@ void EpochTracker::HilbertTransform(int16_t* input, int32_t n_input,
 
 
 int16_t* EpochTracker::HighpassFilter(int16_t* input, int32_t n_input,
-                                      float sample_rate, float corner_freq, float fir_duration) {
+                                      float sample_rate, float corner_freq,
+				      float fir_duration) {
   FdFilter filter(sample_rate, corner_freq, true, fir_duration, false);
   int16_t* filtered_data = new int16_t[n_input];
   int32_t max_buffer_size = filter.GetMaxInputSize();

@@ -59,14 +59,11 @@ limitations under the License.
 // A typical calling sequence might look like:
 /* ==============================================================
    EpochTracker et;
-   if (!et.LoadParams(params_file_name)) {  // optional for custom params
-   exit(-1);  // bail because of parameter setup problems
-   }
    et.Init();  // Prepare the instance for, possibly, multiple calls.
    Track* f0;  // for returning the F0 track
    Track* pm;  // for returning the epoch track
    if (!et.ComputeEpochs(my_input_waveform, &pm, &f0)) {
-   exit(-2);  // problems in the epoch computations
+     exit(-2);  // problems in the epoch computations
    }
    DoSomethingWithTracks(f0, pm);
    delete f0;
@@ -102,29 +99,12 @@ static const bool kDoHighpass = true;
 static const bool kDoHilbertTransform = false;
 static const char kDebugName[] = "";
 
-class Wave;
-class Track;
 
 class EpochTracker {
  public:
   EpochTracker(void);
 
   virtual ~EpochTracker(void);
-
-  // Set up all internal variables from defaults, params and command line.
-  bool Init(void);
-
-  // Compute epochs for a single waveform, allocate pm and f0 and
-  // return results in these.  If either epoch or f0 are NULL, the
-  // corresponding signal is not returned.  It is up to the callr to free
-  // these.  This is to be used only after Init(void) is called.
-  bool ComputeEpochs(const Wave& wave, Track** epoch, Track** f0);
-
-  // Create Track epoch output from Epoch internal structures
-  Track *MakeEpochOutput(float unvoiced_pm_interval);
-
-  // Create Track f0 from Epoch internal structures
-  Track *MakeF0Output(float resample_interval);
 
   // Set the default operating parameters of the tracker.
   void SetParameters(void);
@@ -145,7 +125,6 @@ class EpochTracker {
   // support legacy code.  IT MAY GO AWAY SOON.  This is NOT to be
   // used with ComputeEpochs().
   bool Init(const int16_t* input, int32_t n_input, float sample_rate,
-            float internal_frame_interval,
             float min_f0_search, float max_f0_search,
             bool do_highpass, bool do_hilbert_transform);
 
@@ -216,7 +195,7 @@ class EpochTracker {
   void NormalizeAmplitude(const std::vector<float>& input, float sample_rate,
                           std::vector<float>* output);
 
-  // Apply a Hanning weighting to the signal in input starting at
+  // Apply a Hann weighting to the signal in input starting at
   // sample index offset.  The window will contain size samples, and
   // the windowed signal is placed in output.
   void Window(const std::vector<float> input, int32_t offset, size_t size,
@@ -342,9 +321,6 @@ class EpochTracker {
   // in the output_ array pending retrieval using other methods.
   bool BacktrackAndSaveOutput(void);
 
-  // Checks that the input data will be suitable for the algorithm. It checks
-  // a minimum sample rate as well.
-  bool SanityCheck(const Wave& wave) const;
 
  private:
   // EpochCand stores all of the period hypotheses that can be
@@ -402,7 +378,7 @@ class EpochTracker {
   std::vector<float> voice_offset_prob_;  // prob that a voice offset is occurring
   std::vector<float> prob_voiced_;  // prob that voicing is occurring
   std::vector<float> best_corr_;  // An array of best NCCF vals for all resid peaks.
-  std::vector<float> window_;  // Hanning weighting array for Window()
+  std::vector<float> window_;  // Hann weighting array for Window()
   float sample_rate_;  // original input signal sample rate in Hz
 
   float positive_rms_;  // RMS of all positive, non-zero samples in residual_

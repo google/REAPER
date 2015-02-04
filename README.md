@@ -1,6 +1,6 @@
 # REAPER: Robust Epoch And Pitch EstimatoR
 
-This is a speech processing system.  The epoch program uses the
+This is a speech processing system.  The reaper program uses the
 EpochTracker class to simultaneously estimate the location of
 voiced-speech "epochs" or glottal closure instants (GCI), voicing
 state (voiced or unvoiced) and fundamental frequency (F0 or "pitch").
@@ -119,7 +119,7 @@ for that GCI, and takes the location of the NCCF maximum closest to
 the GCI-based period as the actual period.  The output array of F0 and
 estimated GCI location is left in reverse-time order.
 
-The help text (-h) provided by the epoch program describes various
+The help text (-h) provided by the reaper program describes various
 output options, including debug output of some of the feature signals.
 Of special interest is the residual waveform which may be used to
 check for the expected waveshape.  During non-nasalized, open vocal
@@ -131,11 +131,13 @@ option might improve matters.
 
 ## Usage
 ```
-mkdir build
+mkdir build   # In the REAPER top-level directory
 cd build
 cmake ..
 make
 ```
 Example:
 
-`./tracker -i /tmp/bla.wav -f /tmp/bla.f0 -a true`
+To compute the F0 (pitch) track and write it out as an ASCII file:
+
+`./reaper -i /tmp/bla.wav -f /tmp/bla.f0 -a`

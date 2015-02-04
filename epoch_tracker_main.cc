@@ -47,6 +47,55 @@ const char* kHelp = "Usage: <bin> -i <input_file> "
     "-a saves F0 and PM output in ascii mode\n"
     "-d write diagnostic output to this file pattern\n";
 
+Track* MakeEpochOutput(EpochTracker &et, float unvoiced_pm_interval) {
+  std::vector<float> times;
+  std::vector<int16_t> voicing;
+  et.GetFilledEpochs(unvoiced_pm_interval, &times, &voicing);
+  Track* pm_track = new Track;
+  pm_track->resize(times.size());
+  for (int32_t i = 0; i < times.size(); ++i) {
+    pm_track->t(i) = times[i];
+    pm_track->set_v(i, voicing[i]);
+  }
+  return pm_track;
+}
+
+Track* MakeF0Output(EpochTracker &et, float resample_interval) {
+  std::vector<float> f0;
+  std::vector<float> corr;
+  if (!et.ResampleAndReturnResults(resample_interval, &f0, &corr)) {
+    return NULL;
+  }
+  Track* f0_track = new Track;
+  f0_track->resize(f0.size());
+
+  for (int32_t i = 0; i < f0.size(); ++i) {
+    f0_track->t(i) = resample_interval * i;
+    f0_track->set_v(i, (f0[i] > 0.0) ? true : false);
+    f0_track->a(i) = (f0[i] > 0.0) ? f0[i] : -1.0;
+  }
+  return f0_track;
+}
+
+bool ComputeEpochsAndF0(EpochTracker &et, float unvoiced_pulse_interval,
+			float external_frame_interval, Track** pm, Track** f0) {
+  if (!et.ComputeFeatures()) {
+    return false;
+  }
+  bool tr_result = et.TrackEpochs();
+  et.WriteDiagnostics("");  // Try to save them here, even after tracking failure.
+  if (!tr_result) {
+    fprintf(stderr, "Problems in TrackEpochs");
+    return false;
+  }
+
+  // create pm and f0 objects, these need to be freed in calling client.
+  *pm = MakeEpochOutput(et, unvoiced_pulse_interval);
+  *f0 = MakeF0Output(et, external_frame_interval);
+
+  return true;
+}
+
 int main(int argc, char* argv[]) {
   int opt = 0;
   std::string filename;
@@ -108,24 +157,21 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // Compute f0 and pitchmarks.
   EpochTracker et;
-  if (!et.Init()) {
+  int16_t* wave_datap = const_cast<int16_t *>(wav.data()->data());
+  int32_t n_samples = wav.num_samples();
+  float sample_rate = wav.sample_rate();
+  if (!et.Init(wave_datap, n_samples, sample_rate,
+	       min_f0, max_f0, do_high_pass, do_hilbert_transform)) {
     return 1;
   }
   if (!debug_output.empty()) {
     et.set_debug_name(debug_output);
   }
-  et.set_do_hilbert_transform(do_hilbert_transform);
-  et.set_do_highpass(do_high_pass);
-  et.set_external_frame_interval(external_frame_interval);
-  et.set_max_f0_search(max_f0);
-  et.set_min_f0_search(min_f0);
-  et.set_unvoiced_pulse_interval(inter_pulse);
-
+  // Compute f0 and pitchmarks.
   Track *f0 = NULL;
   Track *pm = NULL;
-  if (!et.ComputeEpochs(wav, &pm, &f0)) {
+  if (!ComputeEpochsAndF0(et, inter_pulse, external_frame_interval, &pm, &f0)) {
     fprintf(stderr, "Failed to compute epochs\n");
     return 1;
   }
