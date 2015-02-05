@@ -124,7 +124,7 @@ so that low scores encourage selection of hypotheses.)
 
 ## Dynamic Programming
 
-'''
+```
 For each pulse in the utterance:
   For each period hypotheses following the pulse:
     For each period hypothesis preceeding the pulse:
@@ -136,7 +136,7 @@ For each pulse in the utterance:
       voiced-to-voiced transition is based on the delta F0 that
       occurs, and the cost of staying in the unvoiced state is a
       constant system parameter.
-'''
+```
 
 ## Backtrace and Output Generation
 
