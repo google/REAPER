@@ -1,11 +1,33 @@
 # REAPER: Robust Epoch And Pitch EstimatoR
 
-This is a speech processing system.  The reaper program uses the
+This is a speech processing system.  The _reaper_ program uses the
 EpochTracker class to simultaneously estimate the location of
 voiced-speech "epochs" or glottal closure instants (GCI), voicing
 state (voiced or unvoiced) and fundamental frequency (F0 or "pitch").
 We define the local (instantaneous) F0 as the inverse of the time
 between successive GCI.
+
+## Downloading and Building _reaper_
+```
+cd convenient_place_for_repository
+git clone https://github.com/google/REAPER.git
+cd REAPER
+mkdir build   # In the REAPER top-level directory
+cd build
+cmake ..
+make
+```
+
+_reaper_ will now be in `convenient_place_for_repository/REAPER/build/reaper`
+
+You may want to add that path to your PATH environment variable or
+move _reaper_ to your favorite bin repository.
+
+Example:
+
+To compute F0 (pitch) and pitchmark (GCI) tracks and write them out as ASCII files:
+
+`reaper -i /tmp/bla.wav -f /tmp/bla.f0 -p /tmp/bla.pm -a`
 
 
 ## Input Signals:
@@ -22,9 +44,19 @@ concatenation text-to-speech systems.  Phase distortion, such as that
 introduced by some close-talking microphones or by well-intended
 recording-studio filtering, including rumble removal, should be
 avoided, for best results.  A rumble filter is provided within REAPER
-as the recommended high-pass pre-filtering option, and is implemented
-as a symmetric FIR filter that introduces no phase distortion.
+as the recommended (default) high-pass pre-filtering option, and is
+implemented as a symmetric FIR filter that introduces no phase
+distortion.
 
+The help text _(-h)_ provided by the _reaper_ program describes
+various output options, including debug output of some of the feature
+signals.  Of special interest is the residual waveform which may be
+used to check for the expected waveshape.  (The residual has a
+_.resid_ filename extension.) During non-nasalized, open vocal tract
+vocalizations (such as /a/), each period should show a somewhat noisy
+version of the derivative of the idealized glottal flow.  If the computed
+residual deviates radically from this ideal, the Hilbert transform
+option _(-t)_ might improve matters.
 
 ## The REAPER Algorithm:
 
@@ -93,6 +125,7 @@ so that low scores encourage selection of hypotheses.)
 
 ## Dynamic Programming
 
+```
 For each pulse in the utterance:
   For each period hypotheses following the pulse:
     For each period hypothesis preceeding the pulse:
@@ -102,8 +135,9 @@ For each pulse in the utterance:
       The costs of making a voicing state change are modulated by the
       probability of voicing onset and offset.  The cost of
       voiced-to-voiced transition is based on the delta F0 that
-      occurs, and the cost of staying in the unvoiced state is zero.
-
+      occurs, and the cost of staying in the unvoiced state is a
+      constant system parameter.
+```
 
 ## Backtrace and Output Generation
 
@@ -117,27 +151,5 @@ candidate is unvoiced.  Instead of simply taking the inverse of the
 period between GCI estimates as F0, the system refers back to the NCCF
 for that GCI, and takes the location of the NCCF maximum closest to
 the GCI-based period as the actual period.  The output array of F0 and
-estimated GCI location is left in reverse-time order.
+estimated GCI location is then time-reversed for final output.
 
-The help text (-h) provided by the reaper program describes various
-output options, including debug output of some of the feature signals.
-Of special interest is the residual waveform which may be used to
-check for the expected waveshape.  During non-nasalized, open vocal
-tract vocalizations (such as /a/), each period should show a somewhat
-noisy version of the derivative of the glottal flow.  If the computed
-residual deviates radically from this ideal, the Hilbert transform
-option might improve matters.
-
-
-## Usage
-```
-mkdir build   # In the REAPER top-level directory
-cd build
-cmake ..
-make
-```
-Example:
-
-To compute the F0 (pitch) track and write it out as an ASCII file:
-
-`./reaper -i /tmp/bla.wav -f /tmp/bla.f0 -a`

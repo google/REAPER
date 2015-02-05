@@ -777,7 +777,6 @@ bool EpochTracker::ComputeFeatures(void) {
   GetPulseCorrelations(correlation_dur_, correlation_thresh_);
   GetVoiceTransitionFeatures();
   GetRmsVoicingModulator();
-  fprintf(stdout, "Finished feature computations\n");
   return true;
 }
 

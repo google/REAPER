@@ -27,7 +27,7 @@ limitations under the License.
 
 
 const char* kHelp = "Usage: <bin> -i <input_file> "
-    "[-f <f0_output> -p <pitchmarks_output> "
+    "[-f <f0_output> -p <pitchmarks_output> \\\n"
     "-t "
     "-s "
     "-e <float> "
@@ -43,9 +43,45 @@ const char* kHelp = "Usage: <bin> -i <input_file> "
     "-e specifies the output frame interval for F0\n"
     "-x maximum f0 to look for\n"
     "-m minimum f0 to look for\n"
-    "-u regular inter-pulse interval to use in unvoiced regions\n"
+    "-u regular inter-mark interval to use in UV pitchmark regions\n"
     "-a saves F0 and PM output in ascii mode\n"
-    "-d write diagnostic output to this file pattern\n";
+    "-d write diagnostic output to this file pattern\n"
+"\nOutputs:\n"\
+"The output files specified with -f and -p are Edinburgh Speech Tool\n"
+"(EST) style files.  These are output as binary by default, ASCII with\n"
+"the -a option.  The F0 values in the f0_output file are resampled with\n"
+"the frame interval specified by option -e (default .005 s).\n"
+"The unvoiced regions of the pitchmark file are filled with marks spaced\n"
+"by the interval specified with -u (default .01 s).\n"
+"\nIt is strongly recommended that the default high-pass filter be\n"
+"applied to all input signals to remove DC and low-frequency\n"
+"components.  For signals that have been recorded using close-talking\n"
+"microphones, or those that have been subjected to various other\n"
+"non-linear phase distortions in the studio, or in post-production, it\n"
+"is often helpful to apply a Hilbert transform (-t option).  The .resid\n"
+"file output when -d is specified can be examined to determine if the\n"
+"voice pulses look anything like the classical glottal-flow derivative,\n"
+"and th Hilbert transform enabled, or not.\n"
+"\n"
+"In the discussion below, the following notation is used:\n"
+"Fs: sample rate\n"
+"Fs0: sample rate of input file\n"
+"nd: n-dimensional vector signal\n"
+"ts: time-stamped vector signal; 1st ele. is the time of the sample in sec.\n"
+"float, int16, etc.: atomic type of the data in the file\n"
+"\nIf -d <name>is specified, the following raw binary output files are produced,\n"
+"with the base path as specified in <name>, and the indicated extensions:\n"
+".bestcorr 2d float ts the highest NCC value found at each residual peak\n"
+".bprms 1d float Fs=500 RMS of 100-1000 Hz bandpassed input signal\n"
+".f0ap 3d float ts F0 and NCC value found for each period\n"
+".resid 1d float Fs=Fs0 LPC residual of conditioned input signal\n"
+".nresid 1d float Fs=Fs0 LPC residual with local gain normalization\n"
+".offsetp 1d float Fs=500 pseudo-probability that voicing is terminating\n"
+".onsetp 1d float Fs=500 pseudo-probability that voicing is starting\n"
+".pvoiced 1d float Fs=500 pseudo-probability that voicing is occurring\n"
+".pcm 1d float Fs=Fs0 conditioned input signal\n"
+".pmlab ASCII 'xlabel' format file of epoch marks\n"
+".pvals 1d float Fs=Fs0 graded residual peak candidates\n";
 
 Track* MakeEpochOutput(EpochTracker &et, float unvoiced_pm_interval) {
   std::vector<float> times;
@@ -66,9 +102,9 @@ Track* MakeF0Output(EpochTracker &et, float resample_interval) {
   if (!et.ResampleAndReturnResults(resample_interval, &f0, &corr)) {
     return NULL;
   }
+
   Track* f0_track = new Track;
   f0_track->resize(f0.size());
-
   for (int32_t i = 0; i < f0.size(); ++i) {
     f0_track->t(i) = resample_interval * i;
     f0_track->set_v(i, (f0[i] > 0.0) ? true : false);
@@ -109,6 +145,10 @@ int main(int argc, char* argv[]) {
   float inter_pulse = kUnvoicedPulseInterval;
   bool ascii = false;
   std::string debug_output;
+  if (argc < 3) {
+    fprintf(stdout, "\n%s\n", kHelp);
+    return 1;
+  }
   while ((opt = getopt(argc, argv, "i:f:p:htse:x:m:u:ad:")) != -1) {
     switch(opt) {
       case 'i':
