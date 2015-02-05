@@ -10,7 +10,7 @@ between successive GCI.
 ## Downloading and Building _reaper_
 ```
 cd convenient_place_for_repository
-git clone https://github.com/dtalkin/REAPER.git
+git clone https://github.com/google/REAPER.git
 cd REAPER
 mkdir build   # In the REAPER top-level directory
 cd build
