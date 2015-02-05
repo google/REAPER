@@ -48,12 +48,13 @@ as the recommended (default) high-pass pre-filtering option, and is
 implemented as a symmetric FIR filter that introduces no phase
 distortion.
 
-The help text _(-h)_ provided by the _reaper_ program describes various
-output options, including debug output of some of the feature signals.
-Of special interest is the residual waveform which may be used to
-check for the expected waveshape.  During non-nasalized, open vocal
-tract vocalizations (such as /a/), each period should show a somewhat
-noisy version of the derivative of the glottal flow.  If the computed
+The help text _(-h)_ provided by the _reaper_ program describes
+various output options, including debug output of some of the feature
+signals.  Of special interest is the residual waveform which may be
+used to check for the expected waveshape.  (The residual has a
+_.resid_ filename extension.) During non-nasalized, open vocal tract
+vocalizations (such as /a/), each period should show a somewhat noisy
+version of the derivative of the idealized glottal flow.  If the computed
 residual deviates radically from this ideal, the Hilbert transform
 option _(-t)_ might improve matters.
 
