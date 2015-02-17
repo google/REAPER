@@ -28,11 +28,12 @@ limitations under the License.
 
 const char* kHelp = "Usage: <bin> -i <input_file> "
     "[-f <f0_output> -p <pitchmarks_output> \\\n"
+    "-c <correlations_output> "
     "-t "
     "-s "
     "-e <float> "
     "-x <float> "
-    "-m <float> "
+    "-m <float> \\\n"
     "-u <float> "
     "-a "
     "-d <debug_output_basename>] "
@@ -61,7 +62,7 @@ const char* kHelp = "Usage: <bin> -i <input_file> "
 "is often helpful to apply a Hilbert transform (-t option).  The .resid\n"
 "file output when -d is specified can be examined to determine if the\n"
 "voice pulses look anything like the classical glottal-flow derivative,\n"
-"and th Hilbert transform enabled, or not.\n"
+"and the Hilbert transform enabled, or not.\n"
 "\n"
 "In the discussion below, the following notation is used:\n"
 "Fs: sample rate\n"
@@ -96,7 +97,7 @@ Track* MakeEpochOutput(EpochTracker &et, float unvoiced_pm_interval) {
   return pm_track;
 }
 
-Track* MakeF0Output(EpochTracker &et, float resample_interval) {
+Track* MakeF0Output(EpochTracker &et, float resample_interval, Track** cor) {
   std::vector<float> f0;
   std::vector<float> corr;
   if (!et.ResampleAndReturnResults(resample_interval, &f0, &corr)) {
@@ -104,17 +105,25 @@ Track* MakeF0Output(EpochTracker &et, float resample_interval) {
   }
 
   Track* f0_track = new Track;
+  Track* cor_track = new Track;
   f0_track->resize(f0.size());
+  cor_track->resize(corr.size());
   for (int32_t i = 0; i < f0.size(); ++i) {
-    f0_track->t(i) = resample_interval * i;
+    float t = resample_interval * i;
+    f0_track->t(i) = t;
+    cor_track->t(i) = t;
     f0_track->set_v(i, (f0[i] > 0.0) ? true : false);
+    cor_track->set_v(i, (f0[i] > 0.0) ? true : false);
     f0_track->a(i) = (f0[i] > 0.0) ? f0[i] : -1.0;
+    cor_track->a(i) = corr[i];
   }
+  *cor = cor_track;
   return f0_track;
 }
 
 bool ComputeEpochsAndF0(EpochTracker &et, float unvoiced_pulse_interval,
-			float external_frame_interval, Track** pm, Track** f0) {
+			float external_frame_interval,
+			Track** pm, Track** f0, Track** corr) {
   if (!et.ComputeFeatures()) {
     return false;
   }
@@ -127,8 +136,7 @@ bool ComputeEpochsAndF0(EpochTracker &et, float unvoiced_pulse_interval,
 
   // create pm and f0 objects, these need to be freed in calling client.
   *pm = MakeEpochOutput(et, unvoiced_pulse_interval);
-  *f0 = MakeF0Output(et, external_frame_interval);
-
+  *f0 = MakeF0Output(et, external_frame_interval, corr);
   return true;
 }
 
@@ -137,6 +145,7 @@ int main(int argc, char* argv[]) {
   std::string filename;
   std::string f0_output;
   std::string pm_output;
+  std::string corr_output;
   bool do_hilbert_transform = kDoHilbertTransform;
   bool do_high_pass = kDoHighpass;
   float external_frame_interval = kExternalFrameInterval;
@@ -149,7 +158,7 @@ int main(int argc, char* argv[]) {
     fprintf(stdout, "\n%s\n", kHelp);
     return 1;
   }
-  while ((opt = getopt(argc, argv, "i:f:p:htse:x:m:u:ad:")) != -1) {
+  while ((opt = getopt(argc, argv, "i:f:p:c:htse:x:m:u:ad:")) != -1) {
     switch(opt) {
       case 'i':
         filename = optarg;
@@ -159,6 +168,9 @@ int main(int argc, char* argv[]) {
         break;
       case 'p':
         pm_output = optarg;
+        break;
+      case 'c':
+        corr_output = optarg;
         break;
       case 't':
         do_hilbert_transform = true;
@@ -211,7 +223,8 @@ int main(int argc, char* argv[]) {
   // Compute f0 and pitchmarks.
   Track *f0 = NULL;
   Track *pm = NULL;
-  if (!ComputeEpochsAndF0(et, inter_pulse, external_frame_interval, &pm, &f0)) {
+  Track *corr = NULL;
+  if (!ComputeEpochsAndF0(et, inter_pulse, external_frame_interval, &pm, &f0, &corr)) {
     fprintf(stderr, "Failed to compute epochs\n");
     return 1;
   }
@@ -227,7 +240,13 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Failed to save pitchmarks to '%s'\n", pm_output.c_str());
     return 1;
   }
+  if (!corr_output.empty() && !corr->Save(corr_output, ascii)) {
+    delete corr;
+    fprintf(stderr, "Failed to save correlations to '%s'\n", corr_output.c_str());
+    return 1;
+  }
   delete f0;
   delete pm;
+  delete corr;
   return 0;
 }
