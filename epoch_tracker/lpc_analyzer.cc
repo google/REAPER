@@ -19,9 +19,12 @@ limitations under the License.
 // before the flood.  Hence the archaic style, etc.
 
 #include "epoch_tracker/lpc_analyzer.h"
-
 #include <stdlib.h>
 #include <math.h>
+
+#ifndef M_PI
+#define M_PI (3.14159265359)
+#endif
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /* Generate a Hanning window, if one does not already exist. */
