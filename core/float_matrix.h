@@ -16,17 +16,12 @@ limitations under the License.
 // A memory mappable float matrix with restricted use, composite audio and
 // track classes being its current uses. Its further use should be avoided
 // as its designed to meet the specific needs of these classes.
-// TODO(idh)
-// This class is candidate for refactoring.
 
 #ifndef _FLOAT_MATRIX_H_
 #define _FLOAT_MATRIX_H_
 
 #include <stdint.h>
 #include <string>
-
-
-
 
 class FloatMatrix {
  public:
@@ -56,8 +51,6 @@ class FloatMatrix {
   uint32_t x_size_;
   uint32_t y_size_;
 };
-
-
 
 #include "float_matrix-inl.h"
 
