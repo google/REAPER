@@ -7,6 +7,10 @@ state (voiced or unvoiced) and fundamental frequency (F0 or "pitch").
 We define the local (instantaneous) F0 as the inverse of the time
 between successive GCI.
 
+This code was developed by David Talkin at Google. This is not an
+official Google product (experimental or otherwise), it is just
+code that happens to be owned by Google.
+
 ## Downloading and Building _reaper_
 ```
 cd convenient_place_for_repository
