@@ -114,7 +114,7 @@ void EpochTracker::SetParameters(void) {
   // weight given to the quality of the residual peak
   peak_quality_wt_ = 1.3;
   // cost of the unvoiced hypothesis
-  unvoiced_cost_ = 0.9;
+  unvoiced_cost_ = kUnvoicedCost;
   // cost of high NCCF values in hypothetical unvoiced regions
   nccf_uv_peak_wt_ = 0.9;
   // weight given to period length

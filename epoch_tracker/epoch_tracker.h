@@ -95,6 +95,7 @@ static const float kInternalFrameInterval = 0.002;
 static const float kMinF0Search = 40.0;
 static const float kMaxF0Search = 500.0;
 static const float kUnvoicedPulseInterval = 0.01;
+static const float kUnvoicedCost = 0.9;
 static const bool kDoHighpass = true;
 static const bool kDoHilbertTransform = false;
 static const char kDebugName[] = "";
