@@ -263,6 +263,7 @@ class EpochTracker {
   void set_unvoiced_pulse_interval(float v) { unvoiced_pulse_interval_ = v; }
   void set_min_f0_search(float v) { min_f0_search_ = v; }
   void set_max_f0_search(float v) { max_f0_search_ = v; }
+  void set_unvoiced_cost(float v) { unvoiced_cost_ = v; }
 
  private:
   // Search the signal in norm_residual_ for prominent negative peaks.
