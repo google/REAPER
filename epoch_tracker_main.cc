@@ -35,6 +35,7 @@ const char* kHelp = "Usage: <bin> -i <input_file> "
     "-x <float> "
     "-m <float> \\\n"
     "-u <float> "
+    "-w <float> "
     "-a "
     "-d <debug_output_basename>] "
     "\n\n Help:\n"
@@ -45,6 +46,8 @@ const char* kHelp = "Usage: <bin> -i <input_file> "
     "-x maximum f0 to look for\n"
     "-m minimum f0 to look for\n"
     "-u regular inter-mark interval to use in UV pitchmark regions\n"
+    "-w set the cost for unvoiced segments\n"
+    "   (def. 0.9, the higher the value the more f0 estimates in noise)\n"
     "-a saves F0 and PM output in ascii mode\n"
     "-d write diagnostic output to this file pattern\n"
 "\nOutputs:\n"\
@@ -152,13 +155,14 @@ int main(int argc, char* argv[]) {
   float max_f0 = kMaxF0Search;
   float min_f0 = kMinF0Search;
   float inter_pulse = kUnvoicedPulseInterval;
+  float unvoiced_cost = kUnvoicedCost;
   bool ascii = false;
   std::string debug_output;
   if (argc < 3) {
     fprintf(stdout, "\n%s\n", kHelp);
     return 1;
   }
-  while ((opt = getopt(argc, argv, "i:f:p:c:htse:x:m:u:ad:")) != -1) {
+  while ((opt = getopt(argc, argv, "i:f:p:c:htse:x:m:u:w:ad:")) != -1) {
     switch(opt) {
       case 'i':
         filename = optarg;
@@ -190,6 +194,9 @@ int main(int argc, char* argv[]) {
       case 'u':
         inter_pulse = atof(optarg);
         break;
+      case 'w':
+        unvoiced_cost = atof(optarg);
+        break;
       case 'a':
         ascii = true;
         break;
@@ -210,6 +217,7 @@ int main(int argc, char* argv[]) {
   }
 
   EpochTracker et;
+  et.set_unvoiced_cost(unvoiced_cost);
   int16_t* wave_datap = const_cast<int16_t *>(wav.data()->data());
   int32_t n_samples = wav.num_samples();
   float sample_rate = wav.sample_rate();
