@@ -584,7 +584,7 @@ void EpochTracker::GetPulseCorrelations(float window_dur, float peak_thresh) {
 }
 
 
-void EpochTracker::Window(const std::vector<float> input, int32_t offset, size_t size,
+void EpochTracker::Window(const std::vector<float>& input, int32_t offset, size_t size,
                           float* output) {
   if (size != window_.size()) {
     window_.resize(size);
