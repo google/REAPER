@@ -199,7 +199,7 @@ class EpochTracker {
   // Apply a Hann weighting to the signal in input starting at
   // sample index offset.  The window will contain size samples, and
   // the windowed signal is placed in output.
-  void Window(const std::vector<float> input, int32_t offset, size_t size,
+  void Window(const std::vector<float>& input, int32_t offset, size_t size,
               float* output);
 
   // Computes signal polarity (-1 for negative, +1 for
