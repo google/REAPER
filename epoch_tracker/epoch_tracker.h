@@ -305,6 +305,7 @@ class EpochTracker {
   // elements of the resid_peaks_ array of structures.
   void GetPulseCorrelations(float window_dur, float peak_thresh);
 
+ public:
   // Create a lattice of glottal period hypotheses in preparation for
   // dynamic programming.  This fills out most of the data fields in
   // resid_peaks_. This must be called after ComputeFeatures.
