@@ -235,6 +235,24 @@ class EpochTracker {
   // internal storage, pending retrieval by other methods.
   bool TrackEpochs(void);
 
+  // Create a lattice of glottal period hypotheses in preparation for
+  // dynamic programming.  This fills out most of the data fields in
+  // resid_peaks_. This must be called after ComputeFeatures.
+  void CreatePeriodLattice(void);
+
+  // Apply the Viterbi dynamic programming algorithm to find the best
+  // path through the period hypothesis lattice created by
+  // CreatePeriodLattice.  The backpointers and cumulative scores are
+  // left in the relevant fields in resid_peaks_.
+  void DoDynamicProgramming(void);
+
+  // Backtrack through the best pointers in the period hypothesis
+  // lattice created by CreatePeriodLattice and processed by
+  // DoDynamicProgramming.  The estimated GCI locations
+  // (epochs) and the corresponding F0 and voicing-states are placed
+  // in the output_ array pending retrieval using other methods.
+  bool BacktrackAndSaveOutput(void);
+
   // Resample the per-period F0 and correlation data that results from
   // the tracker to a periodic signal at an interval of
   // resample_interval seconds.  Samples returned are those nearest in
@@ -304,25 +322,6 @@ class EpochTracker {
   // locations and the full NCCF are saved in the corresponding
   // elements of the resid_peaks_ array of structures.
   void GetPulseCorrelations(float window_dur, float peak_thresh);
-
- public:
-  // Create a lattice of glottal period hypotheses in preparation for
-  // dynamic programming.  This fills out most of the data fields in
-  // resid_peaks_. This must be called after ComputeFeatures.
-  void CreatePeriodLattice(void);
-
-  // Apply the Viterbi dynamic programming algorithm to find the best
-  // path through the period hypothesis lattice created by
-  // CreatePeriodLattice.  The backpointers and cumulative scores are
-  // left in the relevant fields in resid_peaks_.
-  void DoDynamicProgramming(void);
-
-  // Backtrack through the best pointers in the period hypothesis
-  // lattice created by CreatePeriodLattice and processed by
-  // DoDynamicProgramming.  The estimated GCI locations
-  // (epochs) and the corresponding F0 and voicing-states are placed
-  // in the output_ array pending retrieval using other methods.
-  bool BacktrackAndSaveOutput(void);
 
 
  private:
