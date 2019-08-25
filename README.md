@@ -113,7 +113,7 @@ The following feature signals are derived from the conditioned input:
 ## Lattice Generation
 
 Each GCI candidate (pulse) is set into a lattice structure that links
-preceeding and following pulses that occur within minimum and maximum
+preceding and following pulses that occur within minimum and maximum
 pitch period limits that are being considered for the utterance.
 These links establish all of the period hypotheses that will be
 considered for the pulse.  Each hypothesis is scored on "local"
@@ -121,7 +121,7 @@ evidence derived from the NCCF and peak quality measures.  Each pulse
 is also assigned an unvoiced hypothesis, which is also given a score
 based on the available local evidence.  The lattice is checked, and
 modified, if necessary to ensure that each pulse has at least one
-voiced and one unvoiced hypothesis preceeding and following it, to
+voiced and one unvoiced hypothesis preceding and following it, to
 maintain continuity for the dynamic programming to follow.
 (Note that the "scores" are used as costs during dynamic programming,
 so that low scores encourage selection of hypotheses.)
@@ -132,9 +132,9 @@ so that low scores encourage selection of hypotheses.)
 ```
 For each pulse in the utterance:
   For each period hypotheses following the pulse:
-    For each period hypothesis preceeding the pulse:
+    For each period hypothesis preceding the pulse:
       Score the transition cost of connecting the periods.  Choose the
-      minimum overall cost (cumulative+local+transition) preceeding
+      minimum overall cost (cumulative+local+transition) preceding
       period hypothesis, and save its cost and a backpointer to it.
       The costs of making a voicing state change are modulated by the
       probability of voicing onset and offset.  The cost of
@@ -147,7 +147,7 @@ For each pulse in the utterance:
 
 Starting at the last peak in the utterance, the lowest cost period
 candidate ending on that peak is found.  This is the starting point
-for backtracking.  The backpointers to the best preceeding period
+for backtracking.  The backpointers to the best preceding period
 candidates are then followed backwards through the utterance.  As each
 "best candidate" is found, the time location of the terminal peak is
 recorded, along with the F0 corresponding to the period, or 0.0 if the
