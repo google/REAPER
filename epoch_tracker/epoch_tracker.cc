@@ -1198,6 +1198,7 @@ bool EpochTracker::WriteDebugData(const std::vector<float>& data,
   }
   size_t  written = fwrite(&(data.front()), sizeof(data.front()),
                            data.size(), out);
+  fclose(out);
   if (written != data.size()) {
     fprintf(stderr, "Problems writing debug data (%d %d)\n",
             static_cast<int>(written), static_cast<int>(data.size()));
