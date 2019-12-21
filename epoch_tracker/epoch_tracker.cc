@@ -1018,6 +1018,10 @@ void EpochTracker::DoDynamicProgramming(void) {
 
 
 bool EpochTracker::BacktrackAndSaveOutput(void) {
+  if (resid_peaks_.size() == 0) {
+    fprintf(stderr, "Can't backtrack with no residual peaks\n");
+    return false;
+  }
   //  Now find the best period hypothesis at the end of the signal,
   //  and backtrack from there.
   float min_cost = 1.0e30;
