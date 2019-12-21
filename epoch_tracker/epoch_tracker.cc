@@ -36,6 +36,7 @@ EpochTracker::EpochTracker(void) : sample_rate_(-1.0) {
 }
 
 EpochTracker::~EpochTracker(void) {
+  CleanUp();
 }
 
 static inline int32_t RoundUp(float val) {
