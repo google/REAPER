@@ -1025,6 +1025,10 @@ bool EpochTracker::BacktrackAndSaveOutput(void) {
   }
   //  Now find the best period hypothesis at the end of the signal,
   //  and backtrack from there.
+  if (resid_peaks_.empty()) {
+      fprintf(stderr, "No residual peaks found\n");
+      return false;
+  }
   float min_cost = 1.0e30;
   int32_t min_index = 0;
   // First, find a terminal peak which is the end of more than one
